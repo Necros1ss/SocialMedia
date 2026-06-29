@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: social-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong@Pass123
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    restart: unless-stopped
+    networks:
+      - social-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: social-redis
+    command: redis-server --requirepass redispass
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - social-network
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: social-rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "1613:61613"
+      - "15674:15674"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_logs:/var/log/rabbitmq
+      - ./rabbitmq-config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq-config/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+      - ./enabled_plugins:/etc/rabbitmq/enabled_plugins
+    restart: unless-stopped
+    networks:
+      - social-network
+
+  minio:
+    image: minio/minio
+    container_name: social-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+    networks:
+      - social-network
+
+  backend:
+    build: ./backend
+    container_name: social-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_USER=sa
+      - DB_PASSWORD=YourStrong@Pass123
+      - REDIS_PASSWORD=redispass
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - JWT_SECRET=dGVzdF9zZWNyZXRfdGVzdF9zZWNyZXRfdGVzdF9zZWNyZXRfdGVzdF9zZWNyZXQ=
+      - SPRING_DATASOURCE_URL=jdbc:sqlserver://sqlserver:1433;databaseName=SocialMedia;encrypt=true;trustServerCertificate=true
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - MINIO_URL=http://minio:9000
+    depends_on:
+      - sqlserver
+      - redis
+      - rabbitmq
+      - minio
+    restart: unless-stopped
+    networks:
+      - social-network
+
+  frontend:
+    build: ./frontend
+    container_name: social-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - social-network
+
+volumes:
+  sqlserver_data:
+    driver: local
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  rabbitmq_logs:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  social-network:
+    driver: bridge
