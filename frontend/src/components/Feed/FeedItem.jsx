@@ -1,4 +1,5 @@
 import { formatDistanceToNow } from "date-fns"; // Import the function to format dates
+import { useNavigate } from "react-router-dom";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import Reaction from "./Reaction";
@@ -26,6 +27,7 @@ function splitFirstSentence(text) {
   return [firstSentence, rest];
 }
 const FeedItem = ({ userId, post, openPost, goBack }) => {
+  const navigate = useNavigate();
   const [title, content] = splitFirstSentence(post.content);
   const [modalOpen, setModalOpen] = useState(false);
   const onEdit = () => {
@@ -63,11 +65,11 @@ const FeedItem = ({ userId, post, openPost, goBack }) => {
           </button>
         )}
         <div className="post-header-info featured-content">
-          <div className="user-info" onClick={(e) => e.stopPropagation()}>
+          <div className="user-info" onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.username}`); }} style={{ cursor: 'pointer' }}>
             <span className="profile-image">
               <img
                 className="avatar"
-                src="https://www.gravatar.com/avatar/placeholder" // Use a default avatar or user image here
+                src={post.avatarUrl || "https://api.dicebear.com/7.x/adventurer/svg?seed=" + post.username}
                 alt="user-avatar"
               />
             </span>

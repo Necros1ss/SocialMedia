@@ -1,0 +1,60 @@
+package com.example.SocialMedia.controller;
+
+import com.example.SocialMedia.dto.UserProfileDto;
+import com.example.SocialMedia.model.coredata_model.User;
+import com.example.SocialMedia.repository.UserRepository;
+import com.example.SocialMedia.service.IMinioService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+public class UserController {
+
+    private final UserRepository userRepository;
+    private final IMinioService minioService;
+
+    @GetMapping("/profile/{username}")
+    public ResponseEntity<UserProfileDto> getProfile(@PathVariable String username) {
+        User user = userRepository.findByUserName(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+        return ResponseEntity.ok(user.toUserProfileDto());
+    }
+
+    @PostMapping(value = "/profile/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<UserProfileDto> updateProfile(
+            @RequestParam(value = "fullName", required = false) String fullName,
+            @RequestParam(value = "bio", required = false) String bio,
+            @RequestParam(value = "avatar", required = false) MultipartFile avatar,
+            @RequestParam(value = "cover", required = false) MultipartFile cover,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        User user = userRepository.findByUserName(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + userDetails.getUsername()));
+
+        if (fullName != null && !fullName.isBlank()) {
+            user.setFullName(fullName);
+        }
+        if (bio != null) {
+            user.setBio(bio);
+        }
+        if (avatar != null && !avatar.isEmpty()) {
+            var uploadResp = minioService.uploadFile(avatar);
+            user.setProfilePictureURL(uploadResp.getMediaUrl());
+        }
+        if (cover != null && !cover.isEmpty()) {
+            var uploadResp = minioService.uploadFile(cover);
+            user.setCoverPictureURL(uploadResp.getMediaUrl());
+        }
+
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.ok(savedUser.toUserProfileDto());
+    }
+}

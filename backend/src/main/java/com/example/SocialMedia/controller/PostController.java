@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -52,7 +53,7 @@ public class PostController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> createPost(
             @RequestParam(value = "mediaFile", required = false) MultipartFile[] files,
-            @RequestPart("postRequest") PostRequest postRequest,
+            @Valid @RequestPart("postRequest") PostRequest postRequest,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         checkUploadedFile(files);
@@ -75,7 +76,7 @@ public class PostController {
             @PathVariable Integer id,
             @RequestParam(value = "mediaFile", required = false) MultipartFile[] files,
             @RequestParam(value = "deleteFile", required = false) int[] deleteFile,
-            @RequestPart(value = "postRequest", required = false) PostRequest postRequest,
+            @Valid @RequestPart(value = "postRequest", required = false) PostRequest postRequest,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
         checkUploadedFile(files);

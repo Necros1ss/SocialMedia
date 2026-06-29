@@ -8,16 +8,17 @@
   width: 100%;
   min-height: 100px;
   padding: 12px;
-  border: var(--border1px solid #edc9c9);
-  border-radius:focus {
-    outline: none;
-    border-color: #0079d3;
-    box-shadow: 0 0 0 2px rgba(0, 121, 211, 0.2);
-  }
+  border: var(--border);
   resize: vertical;
   font-family: inherit;
   font-size: 14px;
   border-radius: 6px;
+}
+
+.reply-textarea:focus {
+  outline: none;
+  border-color: #0079d3;
+  box-shadow: 0 0 0 2px rgba(0, 121, 211, 0.2);
 }
 
 .reply-actions {

@@ -15,4 +15,7 @@ public class UserProfileDto {
     private String name;
     private String avatar;
     private AuthProvider provider;
+    private String bio;
+    private String cover;
+    private String username;
 }

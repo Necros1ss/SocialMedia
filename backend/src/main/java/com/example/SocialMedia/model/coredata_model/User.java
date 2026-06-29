@@ -42,6 +42,9 @@ public class User implements UserDetails {
     @Column(name = "ProfilePictureURL")
     private String profilePictureURL;
 
+    @Column(name = "CoverPictureURL")
+    private String coverPictureURL;
+
     @Column(name = "PhoneNumber")
     private String phoneNumber;
 
@@ -148,7 +151,10 @@ public class User implements UserDetails {
                 this.phoneNumber,
                 this.fullName,
                 this.profilePictureURL,
-                this.authProvider
+                this.authProvider,
+                this.bio,
+                this.coverPictureURL,
+                this.userName
         );
     }
 }

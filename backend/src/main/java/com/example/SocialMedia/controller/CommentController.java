@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity; // Nên dùng ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -49,7 +50,7 @@ public class CommentController {
 
     @PostMapping
     public ResponseEntity<CommentResponse> createComment(
-            @RequestBody CommentRequest commentRequest,
+            @Valid @RequestBody CommentRequest commentRequest,
             @AuthenticationPrincipal UserDetails userDetails // <--- Bảo mật
     ) {
         commentRequest.setCreatedAt(LocalDateTime.now());
