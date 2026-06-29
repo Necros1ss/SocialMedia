@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 import jakarta.servlet.http.Cookie;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -44,7 +45,7 @@ public class AuthController {
     private String REFRESH_TOKEN_COOKIE = "refresh_token";
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(
-            @RequestBody RegisterRequest registerRequest) {
+            @Valid @RequestBody RegisterRequest registerRequest) {
         String recaptchaToken = registerRequest.getRecaptchaToken();
         if (!recaptchaService.verifyRecaptcha(recaptchaToken)) {
             RegisterResponse bad = new RegisterResponse();
@@ -76,7 +77,7 @@ public class AuthController {
             logger.error("Lỗi nghiêm trọng khi đăng ký: {}", ex.getMessage(), ex);
 
             RegisterResponse err = new RegisterResponse();
-            err.setMessage(ex.getMessage());
+            err.setMessage("Internal server error");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(err);
         }
     }
@@ -94,7 +95,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
-            @RequestBody LoginRequest loginRequest,
+            @Valid @RequestBody LoginRequest loginRequest,
             HttpServletResponse response){
         User user = authService.login(loginRequest);
         LoginResponse loginResponse = new LoginResponse();

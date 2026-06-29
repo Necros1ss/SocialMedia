@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -48,8 +49,7 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-resources/**",
-            "/webjars/**",
-            "/api/post/**"
+            "/webjars/**"
     };
     public static String[] ADMIN_ENDPOINTS = {
             "/api/admin/**"
@@ -61,6 +61,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfiguration()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/comments/**", "/api/reactions/**").permitAll()
                         .requestMatchers("/ws/**", "/ws-sockjs/**").permitAll()
                         .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
                         .anyRequest().authenticated()

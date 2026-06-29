@@ -16,6 +16,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 import java.util.Map;
@@ -124,6 +127,24 @@ public class CommentServiceImpl implements CommentService {
     public CommentResponse deleteComment(Integer commentId) {
         Comment comment = commentRepository.findByCommentId(commentId)
                 .orElseThrow(() -> new CommentNotFoundException("Comment not found"));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            throw new AccessDeniedException("Bạn không có quyền xóa bình luận này");
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof User) {
+            User currentUser = (User) principal;
+            if (comment.getUser().getId() != currentUser.getId()) {
+                throw new AccessDeniedException("Bạn không có quyền xóa bình luận này");
+            }
+        } else {
+            String currentUsername = authentication.getName();
+            if (!comment.getUser().getUsername().equals(currentUsername)) {
+                throw new AccessDeniedException("Bạn không có quyền xóa bình luận này");
+            }
+        }
+
         comment.setDeleted(true); // Soft Delete
         comment = commentRepository.save(comment);
 

@@ -18,6 +18,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -131,7 +134,26 @@ public class PostServiceImpl implements PostService {
     public PostResponse deletePost(int postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException("Post not found"));
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            throw new AccessDeniedException("Bạn không có quyền xóa bài viết này");
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof User) {
+            User currentUser = (User) principal;
+            if (post.getUser().getId() != currentUser.getId()) {
+                throw new AccessDeniedException("Bạn không có quyền xóa bài viết này");
+            }
+        } else {
+            String currentUsername = authentication.getName();
+            if (!post.getUser().getUsername().equals(currentUsername)) {
+                throw new AccessDeniedException("Bạn không có quyền xóa bài viết này");
+            }
+        }
+
         post.setDeleted(true);
+        post = postRepository.save(post);
         return postMapper.toPostResponse(post);
     }
 }

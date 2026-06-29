@@ -12,6 +12,8 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -32,21 +34,21 @@ public class WebSocketTokenFilter implements ChannelInterceptor {
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
             String wsToken = accessor.getFirstNativeHeader("X-WS-TOKEN");
             if (wsToken == null || wsToken.isBlank()) {
-                log.warn("Missing X-WS-TOKEN on CONNECT");
-                return message; // sẽ là anonymous => controller nên null-guard
+                log.warn("Missing X-WS-TOKEN on CONNECT - rejecting connection");
+                throw new BadCredentialsException("Missing X-WS-TOKEN on CONNECT");
             }
             Integer userId = webSocketSessionService.validateTokenAndGetUserId(wsToken);
             if (userId == null) {
-                log.warn("Invalid WS token");
-                return message;
+                log.warn("Invalid WS token - rejecting connection");
+                throw new BadCredentialsException("Invalid WS token");
             }
             var user = userRepository.findById(userId).orElse(null);
             if (user == null) {
-                log.warn("User not found for WS token");
-                return message;
+                log.warn("User not found for WS token - rejecting connection");
+                throw new BadCredentialsException("User not found for WS token");
             }
             var auth = new UsernamePasswordAuthenticationToken(
-                    user.getUsername(), null, List.of() // TODO: add roles nếu cần
+                    user, null, List.of() // Pass User object as principal to match REST security principal
             );
             accessor.setUser(auth);
         }
