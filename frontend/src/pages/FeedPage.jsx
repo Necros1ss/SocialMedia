@@ -51,8 +51,16 @@ const FeedPage = ({
       }
 
       const response = await FeedApi.getFeedFrom(api);
-      const data = await response.json();
-      setFeed(data);
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          setFeed(data);
+        } else {
+          console.error("Feed data is not an array:", data);
+        }
+      } else {
+        console.error("Failed to fetch feed, status:", response.status);
+      }
     } catch (error) {
       console.error("There was an error fetching the feed data:", error);
     } finally {
@@ -61,7 +69,9 @@ const FeedPage = ({
   };
 
   useEffect(() => {
-    fetchFeed();
+    if (currentView !== "post") {
+      fetchFeed();
+    }
   }, [currentView, userId, refreshKey]);
 
   useEffect(() => {
