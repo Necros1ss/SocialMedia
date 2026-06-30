@@ -119,9 +119,12 @@ public class AuthServiceImpl implements AuthService {
     public Optional<User> findUserByIdentifier(String identifier) {
         if (identifier.matches(EMAIL_REGEX)) {
             return userRepository.findByEmail(identifier);
-        } else {
-            return userRepository.findByPhoneNumber(identifier);
         }
+        Optional<User> byPhone = userRepository.findByPhoneNumber(identifier);
+        if (byPhone.isPresent()) {
+            return byPhone;
+        }
+        return userRepository.findByUserName(identifier);
     }
     @Override
     public Optional<User> findUserByIdentifier(String identifier, OtpChannel channel) {
