@@ -28,6 +28,11 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Do not intercept auth endpoints to avoid infinite deadlocks
+    if (originalRequest && originalRequest.url && (originalRequest.url.includes('/auth/refresh') || originalRequest.url.includes('/auth/login') || originalRequest.url.includes('/auth/register'))) {
+      return Promise.reject(error);
+    }
+
     // Check if error is 401 Unauthorized and not already retried
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
@@ -57,7 +62,9 @@ apiClient.interceptors.response.use(
         try {
           localStorage.removeItem('autoLogin');
         } catch (e) {}
-        window.location.href = '/login';
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       }
     }
@@ -208,6 +215,42 @@ const api = {
     const response = await apiClient.get(`/posts/user/${userId}`, {
       params: { page, size }
     });
+    return response.data;
+  },
+  getFriends: async () => {
+    const response = await apiClient.get('/users/friends');
+    return response.data;
+  },
+  searchUsers: async (query) => {
+    const response = await apiClient.get('/users/search', { params: { q: query } });
+    return response.data;
+  },
+  searchPosts: async (query) => {
+    const response = await apiClient.get('/posts/search', { params: { q: query } });
+    return response.data;
+  },
+  getNotifications: async (page = 0, size = 20) => {
+    const response = await apiClient.get('/notifications', { params: { page, size } });
+    return response.data;
+  },
+  getUnreadNotificationCount: async () => {
+    const response = await apiClient.get('/notifications/unread-count');
+    return response.data;
+  },
+  markNotificationRead: async (id) => {
+    const response = await apiClient.post(`/notifications/${id}/read`);
+    return response.data;
+  },
+  followUser: async (userId) => {
+    const response = await apiClient.post(`/follows/${userId}`);
+    return response.data;
+  },
+  unfollowUser: async (userId) => {
+    const response = await apiClient.delete(`/follows/${userId}`);
+    return response.data;
+  },
+  checkFollowStatus: async (userId) => {
+    const response = await apiClient.get(`/follows/${userId}/status`);
     return response.data;
   },
 };

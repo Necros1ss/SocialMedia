@@ -6,6 +6,7 @@ import Reaction from "./Reaction";
 import OptionButton from "../Common/OptionButton";
 import { useState } from "react";
 import Modal from "../Common/Modal";
+import SharePostModal from "./SharePostModal";
 import { PostApi } from "../../utils/ultis";
 
 function splitFirstSentence(text) {
@@ -26,10 +27,11 @@ function splitFirstSentence(text) {
 
   return [firstSentence, rest];
 }
-const FeedItem = ({ userId, post, openPost, goBack }) => {
+const FeedItem = ({ userId, post, openPost, goBack, replyInputComponent }) => {
   const navigate = useNavigate();
   const [title, content] = splitFirstSentence(post.content);
   const [modalOpen, setModalOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const onEdit = () => {
     setModalOpen(true);
   };
@@ -38,29 +40,39 @@ const FeedItem = ({ userId, post, openPost, goBack }) => {
   };
   return (
     <div key={post.id} className="collection-card post-card">
-      <div className="post-header" onClick={openPost && (() => openPost(post))}>
+      <div className="post-header" onClick={openPost ? (() => openPost(post)) : undefined}>
         {goBack && (
           <button
             className="back-button"
-            onClick={
-              goBack &&
-              (() => {
-                goBack();
-              })
-            }
+            onClick={(e) => {
+              e.stopPropagation();
+              goBack();
+            }}
+            style={{ 
+              background: '#e2e8f0', 
+              border: 'none', 
+              width: '32px', 
+              height: '32px', 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              cursor: 'pointer', 
+              marginRight: '12px',
+              flexShrink: 0
+            }}
           >
             <svg
-              rpl=""
-              className="rpl-rtl-icon"
-              fill="currentColor"
-              height="16"
-              icon-name="arrow-back"
-              viewBox="0 0 20 20"
-              width="16"
-              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#1e293b"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ width: '16px', height: '16px' }}
             >
-              {" "}
-              <path d="M17.5 9.1H4.679l5.487-5.462a.898.898 0 00.003-1.272.898.898 0 00-1.272-.003l-7.032 7a.898.898 0 000 1.275l7.03 7a.896.896 0 001.273-.003.898.898 0 00-.002-1.272l-5.487-5.462h12.82a.9.9 0 000-1.8z"></path>{" "}
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
           </button>
         )}
@@ -133,6 +145,7 @@ const FeedItem = ({ userId, post, openPost, goBack }) => {
           </Carousel>
         </div>
       ) : null}
+      
       <div className="post-footer">
         <Reaction
           userId={userId}
@@ -159,7 +172,7 @@ const FeedItem = ({ userId, post, openPost, goBack }) => {
           </svg>
           <span className="highlight-title">{post.commentCount} Comments</span>
         </button>
-        <button className="highlight-item">
+        <button className="highlight-item" onClick={() => setShareOpen(true)}>
           <svg
             rpl=""
             aria-hidden="true"
@@ -177,6 +190,10 @@ const FeedItem = ({ userId, post, openPost, goBack }) => {
           <div className="highlight-title">{post.shareCount} Shares</div>
         </button>
       </div>
+      
+      {replyInputComponent && replyInputComponent}
+      
+      <SharePostModal isOpen={shareOpen} onClose={() => setShareOpen(false)} post={post} />
     </div>
   );
 };

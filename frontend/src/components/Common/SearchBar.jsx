@@ -1,10 +1,60 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { Home, Zap, Video, User, ShoppingBag, Bell, MessageCircle, Settings, Search } from "lucide-react";
 import Modal from "./Modal";
+import api from "../../services/api";
 import "../../styles/searchbar.css";
 
-const Header = ({ userId, onCreatePost }) => {
+const Header = ({ userId, onCreatePost, currentView, setCurrentView }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  
+  const navigate = useNavigate();
+  const notifRef = useRef(null);
+
+  useEffect(() => {
+    const fetchNotifs = async () => {
+      try {
+        const countData = await api.getUnreadNotificationCount();
+        setUnreadCount(countData.count);
+      } catch (err) {}
+    };
+    fetchNotifs();
+    const interval = setInterval(fetchNotifs, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleNotificationClick = async () => {
+    if (!showNotifications) {
+      try {
+        const data = await api.getNotifications(0, 10);
+        setNotifications(data.content || []);
+      } catch (err) {}
+    }
+    setShowNotifications(!showNotifications);
+  };
+
+  const handleMarkRead = async (notifId) => {
+    try {
+      await api.markNotificationRead(notifId);
+      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {}
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -13,71 +63,155 @@ const Header = ({ userId, onCreatePost }) => {
 
   const handlePostCreated = () => {
     setModalOpen(false);
-    // Optionally refresh feed
     if (onCreatePost) onCreatePost();
   };
 
+  const handleTabClick = (view) => {
+    if (setCurrentView) {
+      setCurrentView(view);
+    } else {
+      if (view === "home") {
+        navigate("/");
+      }
+    }
+  };
+
   return (
-    <header className="header">
-      {/* Left */}
-      <div className="header__left">
-        <svg viewBox="0 0 24 24" className="header__icon" aria-label="Home">
-          <path d="M9 12c-1.67 0-3.13-.85-4-2.15-.34-.88-.02-1.92.66-2.59.68-.67 1.72-.99 2.66-.66 1.13.32 2.15 1.15 2.47 2.34.2.75.1 1.53-.27 2.06zM18 12c-1.67 0-3.13-.85-4-2.15-.34-.88-.02-1.92.66-2.59.68-.67 1.72-.99 2.66-.66 1.13.32 2.15 1.15 2.47 2.34.2.75.1 1.53-.27 2.06zM12 18c-2.28 0-4.22-1.66-4.93-3.9-.15-.53-.02-1.09.33-1.5.35-.41.92-.65 1.48-.65 1.1 0 2 .9 2.01 2 .01.53.19 1.04.49 1.45.35.48 1.02.73 1.62.48.35-.15.59-.5.59-.9 0-1.1-.9-2-2-2-.55 0-1.07.25-1.43.67-.25.3-.37.68-.3 1.07.29 1.66 1.75 2.73 3.43 2.73 1.37 0 2.56-.78 3.15-1.91.2-.4.12-.88-.21-1.19-.33-.31-.88-.34-1.23-.06-.41.33-.65.91-.65 1.5 0 1.1-.9 2-2 2z" />
+    <header className="header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', background: '#fff', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 0, zIndex: 100, boxSizing: 'border-box', height: '65px' }}>
+      {/* Brand logo matching image */}
+      <div className="header__left" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => handleTabClick("home")}>
+        <svg viewBox="0 0 24 24" style={{ width: '28px', height: '28px', fill: '#10b981' }}>
+          <polygon points="12,2 2,12 9,12 9,22 15,22 15,12 22,12" />
         </svg>
-        <span className="header__brand">MyApp</span>
+        <span className="header__brand" style={{ fontSize: '22px', fontWeight: 'bold', color: '#1064ea', letterSpacing: '-0.5px' }}>Sociala.</span>
       </div>
 
-      {/* Search */}
-      <form className="header__search" onSubmit={handleSearch}>
-        <button type="submit" className="header__search-button">
-          <svg
-            rpl=""
-            aria-hidden="true"
-            fill="currentColor"
-            height="16"
-            icon-name="search-outline"
-            viewBox="0 0 20 20"
-            width="16"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {" "}
-            <path d="M18.736 17.464l-3.483-3.483A7.961 7.961 0 0016.999 9 8 8 0 109 17a7.961 7.961 0 004.981-1.746l3.483 3.483a.9.9 0 101.272-1.273zM9 15.2A6.207 6.207 0 012.8 9c0-3.419 2.781-6.2 6.2-6.2s6.2 2.781 6.2 6.2-2.781 6.2-6.2 6.2z"></path>
-          </svg>
-        </button>
+      {/* Rounded search box matching image */}
+      <form className="header__search" onSubmit={handleSearch} style={{ position: 'relative', width: '300px', display: 'flex', alignItems: 'center' }}>
+        <Search size={16} style={{ position: 'absolute', left: '16px', color: '#9ca3af' }} />
         <input
           type="text"
-          placeholder="Search"
+          placeholder="Start typing to search.."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={async (e) => {
+            const query = e.target.value;
+            setSearchQuery(query);
+            if (query.trim().length > 0) {
+              try {
+                const results = await api.searchUsers(query);
+                setSearchResults(results);
+              } catch (err) {
+                console.error(err);
+              }
+            } else {
+              setSearchResults([]);
+            }
+          }}
           className="header__search-input"
+          style={{ width: '100%', padding: '10px 14px 10px 42px', borderRadius: '30px', border: 'none', background: '#f0f2f5', fontSize: '13px', outline: 'none', color: '#1f2937' }}
           aria-label="Search"
         />
+        {searchResults.length > 0 && searchQuery && (
+          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', marginTop: '8px', zIndex: 50, maxHeight: '300px', overflowY: 'auto' }}>
+            {searchResults.map((user) => (
+              <div key={user.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', cursor: 'pointer', borderBottom: '1px solid #f3f4f6' }} onClick={() => { setSearchQuery(''); setSearchResults([]); handleTabClick("author_profile"); }}>
+                <img src={user.profilePictureURL || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop"} alt="avatar" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 'bold' }}>{user.fullName || user.username}</span>
+                  <span style={{ fontSize: '11px', color: '#6b7280' }}>@{user.username}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </form>
 
-      {/* Right */}
-      <div className="header__right">
-        <button
-          className="header__nav-button create-post-btn"
-          onClick={() => setModalOpen(true)}
+      {/* Navigation tabs in center */}
+      <div className="header__tabs" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+        <button 
+          onClick={() => handleTabClick("home")} 
+          style={{ background: currentView === "home" ? '#e0f2fe' : 'none', border: 'none', padding: '10px', borderRadius: '50%', color: currentView === "home" ? '#1064ea' : '#4b5563', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
         >
-          <svg
-            rpl=""
-            fill="currentColor"
-            height="20"
-            viewBox="0 0 20 20"
-            width="20"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d="M14.7 2H5.3C3.481 2 2 3.48 2 5.3v9.4C2 16.519 3.48 18 5.3 18h9.4c1.819 0 3.3-1.48 3.3-3.3V5.3C18 3.481 16.52 2 14.7 2zm1.499 12.7a1.5 1.5 0 01-1.499 1.499H5.3A1.5 1.5 0 013.801 14.7V5.3A1.5 1.5 0 015.3 3.801h9.4A1.5 1.5 0 0116.199 5.3v9.4zM14 10.9h-3.1V14H9.1v-3.1H6V9.1h3.1V6h1.8v3.1H14v1.8z"></path>
-          </svg>
-          Create Post
+          <Home size={20} />
         </button>
-        <Modal
-          userId={userId}
-          isOpen={modalOpen}
-          onClose={handlePostCreated}
-        />
+        <button 
+          onClick={() => handleTabClick("dashboard")} 
+          style={{ background: currentView === "dashboard" ? '#e0f2fe' : 'none', border: 'none', padding: '10px', borderRadius: '50%', color: currentView === "dashboard" ? '#1064ea' : '#4b5563', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Zap size={20} />
+        </button>
+        <button 
+          onClick={() => handleTabClick("group_detail")} 
+          style={{ background: currentView === "group_detail" ? '#e0f2fe' : 'none', border: 'none', padding: '10px', borderRadius: '50%', color: currentView === "group_detail" ? '#1064ea' : '#4b5563', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Video size={20} />
+        </button>
+        <button 
+          onClick={() => handleTabClick("author_profile")} 
+          style={{ background: currentView === "author_profile" ? '#e0f2fe' : 'none', border: 'none', padding: '10px', borderRadius: '50%', color: currentView === "author_profile" ? '#1064ea' : '#4b5563', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <User size={20} />
+        </button>
+        <button 
+          onClick={() => handleTabClick("popular_groups")} 
+          style={{ background: currentView === "popular_groups" ? '#e0f2fe' : 'none', border: 'none', padding: '10px', borderRadius: '50%', color: currentView === "popular_groups" ? '#1064ea' : '#4b5563', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <ShoppingBag size={20} />
+        </button>
       </div>
+
+      {/* Right Action Icons */}
+      <div className="header__right" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        
+        {/* Notifications Dropdown */}
+        <div style={{ position: 'relative' }} ref={notifRef}>
+          <button onClick={handleNotificationClick} style={{ background: '#f0f2f5', border: 'none', padding: '8px', borderRadius: '50%', color: '#1064ea', cursor: 'pointer', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Bell size={20} />
+            {unreadCount > 0 && (
+              <span style={{ position: 'absolute', top: '2px', right: '2px', width: '14px', height: '14px', borderRadius: '50%', background: '#f97316', color: '#fff', fontSize: '9px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+          
+          {showNotifications && (
+            <div style={{ position: 'absolute', top: '100%', right: 0, width: '320px', background: '#fff', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', marginTop: '8px', zIndex: 100, maxHeight: '400px', overflowY: 'auto', border: '1px solid #e5e7eb' }}>
+              <div style={{ padding: '16px', borderBottom: '1px solid #f3f4f6', fontWeight: 'bold', fontSize: '15px' }}>Notifications</div>
+              {notifications.length === 0 ? (
+                <div style={{ padding: '24px', textAlign: 'center', color: '#6b7280', fontSize: '13px' }}>No notifications yet.</div>
+              ) : (
+                notifications.map(notif => (
+                  <div key={notif.id} onClick={() => !notif.read && handleMarkRead(notif.id)} style={{ padding: '12px 16px', display: 'flex', gap: '12px', borderBottom: '1px solid #f3f4f6', cursor: 'pointer', background: notif.read ? '#fff' : '#f0fdf4' }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontSize: '13px', color: '#1f2937' }}>
+                        <strong>{notif.actor?.username || 'Someone'}</strong> {notif.notificationType.replace('NEW_', '').toLowerCase()}
+                      </p>
+                      <span style={{ fontSize: '11px', color: '#9ca3af' }}>{new Date(notif.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    {!notif.read && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', alignSelf: 'center' }}></div>}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        <button onClick={() => navigate("/messenger")} style={{ background: '#f0f2f5', border: 'none', padding: '8px', borderRadius: '50%', color: '#1064ea', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <MessageCircle size={20} />
+        </button>
+        <button onClick={() => handleTabClick("settings")} style={{ background: '#f0f2f5', border: 'none', padding: '8px', borderRadius: '50%', color: '#1064ea', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Settings size={20} />
+        </button>
+        <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', border: '2px solid #e5e7eb' }} onClick={() => handleTabClick("author_profile")}>
+          <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=faces" alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      </div>
+
+      <Modal
+        userId={userId}
+        isOpen={modalOpen}
+        onClose={handlePostCreated}
+      />
     </header>
   );
 };

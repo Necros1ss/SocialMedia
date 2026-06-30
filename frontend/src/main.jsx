@@ -5,6 +5,7 @@ import App from './App.jsx'
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3'
 import { CONFIG } from './config/constants'
 import { BrowserRouter } from 'react-router-dom'
+import ErrorBoundary from './components/Common/ErrorBoundary.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -13,7 +14,9 @@ createRoot(document.getElementById('root')).render(
       scriptProps={{ async: true, defer: true }}
     >
       <BrowserRouter>
-        <App />
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
       </BrowserRouter>
     </GoogleReCaptchaProvider>
   </StrictMode>,

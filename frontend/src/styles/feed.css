@@ -8,6 +8,29 @@
   background-color: transparent;
 }
 
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #64748b;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 html {
   font-size: 16px;
 }
@@ -41,10 +64,10 @@ svg {
 .grid {
   width: 100vw;
   height: 100vh;
-  overflow: scroll;
+  overflow: hidden;
   display: grid;
-  grid-template-rows: 1fr;
-  grid-template-columns: 2fr 5fr 2fr;
+  grid-template-rows: 65px 1fr;
+  grid-template-columns: 280px 1fr 340px;
 }
 
 .app {
@@ -109,10 +132,14 @@ svg {
 
 /* Post Card */
 .post-card {
-  border-radius: 1rem;
-  padding: 0.25rem 1rem;
-  margin: 0.25rem 0;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+  box-sizing: border-box;
   cursor: pointer;
+  margin-bottom: 20px;
 }
 
 /* Post Header */
@@ -426,3 +453,6 @@ button:hover {
     border-top: var(--border);
   }
 }
+.stories-list::-webkit-scrollbar { display: none; }
+.stories-list { scrollbar-width: none; }
+

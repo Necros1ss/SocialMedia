@@ -8,6 +8,7 @@ import '../styles/responsive.css';
 import LoginForm from '../components/Auth/LoginForm';
 import RegisterForm from '../components/Auth/RegisterForm';
 import OTPVerification from '../components/Auth/OTPVerification';
+import ForgotPwdForm from '../components/Auth/ForgotPwdForm';
 import SocialButton from '../components/Common/SocialButton';
 
 const AuthPage = ({ isDark, onToggleDark, onAuthSuccess, initialMode }) => {
@@ -65,90 +66,95 @@ const AuthPage = ({ isDark, onToggleDark, onAuthSuccess, initialMode }) => {
       <button className="theme-toggle" onClick={onToggleDark}>
         {isDark ? <Sun size={20} /> : <Moon size={20} />}
       </button>
-      <div className={`auth-card split ${showOTP ? 'show-otp' : ''}`}>
-        <div className="auth-columns">
-          <div className="auth-left">
-            {/* Tabs chuyển đổi Sign In / Sign Up */}
-            {!showOTP && (
-              <div className="auth-tabs" role="tablist" aria-label="Auth switcher">
-                <button
-                  role="tab"
-                  aria-selected={mode === 'login'}
-                  className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
-                  onClick={() => {
-                    if (mode !== 'login') {
-                      setShowOTP(false);
-                      handleSwitch('login');
-                    }
-                  }}
-                >
-                  Sign In
-                </button>
-                <button
-                  role="tab"
-                  aria-selected={mode === 'register'}
-                  className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
-                  onClick={() => {
-                    if (mode !== 'register') {
-                      setShowOTP(false);
-                      handleSwitch('register');
-                    }
-                  }}
-                >
-                  Sign Up
-                </button>
-              </div>
-            )}
+      {mode === 'forgot' ? (
+        <ForgotPwdForm onBackToLogin={() => handleSwitch('login')} />
+      ) : (
+        <div className={`auth-card split ${showOTP ? 'show-otp' : ''}`}>
+          <div className="auth-columns">
+            <div className="auth-left">
+              {/* Tabs chuyển đổi Sign In / Sign Up */}
+              {!showOTP && (
+                <div className="auth-tabs" role="tablist" aria-label="Auth switcher">
+                  <button
+                    role="tab"
+                    aria-selected={mode === 'login'}
+                    className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
+                    onClick={() => {
+                      if (mode !== 'login') {
+                        setShowOTP(false);
+                        handleSwitch('login');
+                      }
+                    }}
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    role="tab"
+                    aria-selected={mode === 'register'}
+                    className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
+                    onClick={() => {
+                      if (mode !== 'register') {
+                        setShowOTP(false);
+                        handleSwitch('register');
+                      }
+                    }}
+                  >
+                    Sign Up
+                  </button>
+                </div>
+              )}
 
-            {!showOTP ? (
-              <>
-                {mode === 'login' ? (
-                  <LoginForm
-                    hideHeader
-                    hideSocial
-                    onSwitchToRegister={() => handleSwitch('register')}
-                    onLoginSuccess={handleLoginSuccess}
-                  />
-                ) : (
-                  <RegisterForm
-                    hideHeader
-                    hideSocial
-                    onSwitchToLogin={() => handleSwitch('login')}
-                    onRegisterSuccess={handleRegisterSuccess}
-                  />
-                )}
-              </>
-            ) : (
-              <OTPVerification
-                identifier={registeredIdentifier}
-                channel={registeredChannel}
-                onVerify={handleVerifySuccess}
-                onResend={() => { }}
-                onBack={() => {
-                  setShowOTP(false);
-                  setShouldAutoSend(false);
-                }}
-                useFirebasePhone={registeredChannel === 'SMS'}
-                autoSend={shouldAutoSend}
-              />
-            )}
-          </div>
-
-          <div className="auth-right">
-            <div className="welcome-block">
-              <h3>{rightTitle}</h3>
-              <p>{rightSubtitle}</p>
+              {!showOTP ? (
+                <>
+                  {mode === 'login' ? (
+                    <LoginForm
+                      hideHeader
+                      hideSocial
+                      onSwitchToRegister={() => handleSwitch('register')}
+                      onLoginSuccess={handleLoginSuccess}
+                      onForgotPassword={() => handleSwitch('forgot')}
+                    />
+                  ) : (
+                    <RegisterForm
+                      hideHeader
+                      hideSocial
+                      onSwitchToLogin={() => handleSwitch('login')}
+                      onRegisterSuccess={handleRegisterSuccess}
+                    />
+                  )}
+                </>
+              ) : (
+                <OTPVerification
+                  identifier={registeredIdentifier}
+                  channel={registeredChannel}
+                  onVerify={handleVerifySuccess}
+                  onResend={() => { }}
+                  onBack={() => {
+                    setShowOTP(false);
+                    setShouldAutoSend(false);
+                  }}
+                  useFirebasePhone={registeredChannel === 'SMS'}
+                  autoSend={shouldAutoSend}
+                />
+              )}
             </div>
-            <div className="social-section">
-              <div className="divider"><span>Hoặc tiếp tục với</span></div>
-              <div className="social-buttons">
-                <SocialButton provider="google" onClick={() => handleSocialLogin('google')} />
-                <SocialButton provider="facebook" onClick={() => handleSocialLogin('facebook')} />
+
+            <div className="auth-right">
+              <div className="welcome-block">
+                <h3>{rightTitle}</h3>
+                <p>{rightSubtitle}</p>
+              </div>
+              <div className="social-section">
+                <div className="divider"><span>Hoặc tiếp tục với</span></div>
+                <div className="social-buttons">
+                  <SocialButton provider="google" onClick={() => handleSocialLogin('google')} />
+                  <SocialButton provider="facebook" onClick={() => handleSocialLogin('facebook')} />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
       {/* reCAPTCHA container removed (no Firebase phone auth) */}
       <div className="auth-footer">
         <p>© 2025 {CONFIG.APP_NAME}. All rights reserved.</p>

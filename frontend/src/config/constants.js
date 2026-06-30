@@ -55,8 +55,8 @@ export const CONFIG = {
 
   // OAuth Redirect URLs (must use absolute URL to backend - proxy doesn't work for window.location)
   OAUTH_REDIRECT: {
-    GOOGLE: `http://localhost:8080/oauth2/authorization/google`,
-    FACEBOOK: `http://localhost:8080/oauth2/authorization/facebook`
+    GOOGLE: `http://localhost/oauth2/authorization/google`,
+    FACEBOOK: `http://localhost/oauth2/authorization/facebook`
   },
 
   // Debug

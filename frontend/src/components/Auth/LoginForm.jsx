@@ -10,14 +10,14 @@ import { validateEmail, validatePhone } from '../../utils/validation';
 import api from '../../services/api';
 import { CONFIG } from '../../config/constants';
 
-const LoginForm = ({ onSwitchToRegister, onLoginSuccess, hideHeader = false, hideSocial = false }) => {
+const LoginForm = ({ onSwitchToRegister, onLoginSuccess, onForgotPassword, hideHeader = false, hideSocial = false }) => {
   const [formData, setFormData] = useState({ identifier: '', password: '', rememberMe: false });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [touched, setTouched] = useState({});
 
   const handleForgotPassword = () => {
-    // TODO: Implement forgot password logic
+    if (onForgotPassword) onForgotPassword();
   };
 
   const validateField = (name, value) => {

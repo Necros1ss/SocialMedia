@@ -21,7 +21,7 @@ export const useConversationPhotos = (conversationId) => {
     setLoadingPhotos(true);
     try {
       const response = await fetch(
-        `http://localhost:8080/api/chat/${conversationId}/photos?page=${page}&size=20`,
+        `/api/chat/${conversationId}/photos?page=${page}&size=20`,
         { credentials: 'include' }
       );
       if (!response.ok) {
@@ -67,7 +67,7 @@ export const useConversationFiles = (conversationId) => {
     setLoadingFiles(true);
     try {
       const response = await fetch(
-        `http://localhost:8080/api/chat/${conversationId}/files?page=${page}&size=10`,
+        `/api/chat/${conversationId}/files?page=${page}&size=10`,
         { credentials: 'include' }
       );
       if (!response.ok) throw new Error('Failed to fetch files');
@@ -106,7 +106,7 @@ export const useConversationMembers = (conversationId) => {
     setLoadingMembers(true);
     try {
       const response = await fetch(
-        `http://localhost:8080/api/chat/${conversationId}/members/details`,
+        `/api/chat/${conversationId}/members/details`,
         { credentials: 'include' }
       );
       if (!response.ok) throw new Error('Failed to fetch members');
